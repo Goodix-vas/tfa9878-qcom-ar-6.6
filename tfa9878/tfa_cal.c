@@ -112,6 +112,10 @@ static ssize_t rdc_store(struct device *dev,
 		return -EINVAL;
 	}
 
+	cal_data[idx].rdc = value;
+	pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
+		__func__, idx, value);
+
 	return size;
 }
 
@@ -159,6 +163,10 @@ static ssize_t rdc_r_store(struct device *dev,
 		pr_info("%s: wrong value: %s\n", __func__, buf);
 		return -EINVAL;
 	}
+
+	cal_data[idx].rdc = value;
+	pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
+		__func__, idx, value);
 
 	return size;
 }
