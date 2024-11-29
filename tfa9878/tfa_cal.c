@@ -75,8 +75,9 @@ static ssize_t rdc_show(struct device *dev,
 	char cal_result[FILESIZE_CAL] = {0};
 	int ret;
 
-	snprintf(cal_result, FILESIZE_CAL,
-		"%d", cal_data[idx].rdc);
+	if (idx >= 0)
+		snprintf(cal_result, FILESIZE_CAL,
+			"%d", cal_data[idx].rdc);
 
 	if (cal_result[0] == 0)
 		ret = snprintf(buf, 7 + 1, "no_data");
@@ -84,7 +85,7 @@ static ssize_t rdc_show(struct device *dev,
 		ret = snprintf(buf, strlen(cal_result) + 1,
 			"%s", cal_result);
 
-	if (ret > 0)
+	if (idx >= 0 && ret > 0)
 		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
 			__func__, idx, cal_data[idx].rdc);
 	else
@@ -106,9 +107,11 @@ static ssize_t rdc_store(struct device *dev,
 		return -EINVAL;
 	}
 
-	cal_data[idx].rdc = value;
-	pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
-		__func__, idx, value);
+	if (idx >= 0) {
+		cal_data[idx].rdc = value;
+		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
+			__func__, idx, value);
+	}
 
 	return size;
 }
@@ -121,8 +124,9 @@ static ssize_t rdc_r_show(struct device *dev,
 	char cal_result[FILESIZE_CAL] = {0};
 	int ret;
 
-	snprintf(cal_result, FILESIZE_CAL,
-		"%d", cal_data[idx].rdc);
+	if (idx >= 0)
+		snprintf(cal_result, FILESIZE_CAL,
+			"%d", cal_data[idx].rdc);
 
 	if (cal_result[0] == 0)
 		ret = snprintf(buf, 7 + 1, "no_data");
@@ -130,7 +134,7 @@ static ssize_t rdc_r_show(struct device *dev,
 		ret = snprintf(buf, strlen(cal_result) + 1,
 			"%s", cal_result);
 
-	if (ret > 0)
+	if (idx >= 0 && ret > 0)
 		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
 			__func__, idx, cal_data[idx].rdc);
 	else
@@ -152,9 +156,11 @@ static ssize_t rdc_r_store(struct device *dev,
 		return -EINVAL;
 	}
 
-	cal_data[idx].rdc = value;
-	pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
-		__func__, idx, value);
+	if (idx >= 0) {
+		cal_data[idx].rdc = value;
+		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
+			__func__, idx, value);
+	}
 
 	return size;
 }
