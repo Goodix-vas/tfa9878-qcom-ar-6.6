@@ -75,7 +75,7 @@ static ssize_t rdc_show(struct device *dev,
 	char cal_result[FILESIZE_CAL] = {0};
 	int ret;
 
-	if (idx >= 0)
+	if (idx > TFA_NOT_FOUND)
 		snprintf(cal_result, FILESIZE_CAL,
 			"%d", cal_data[idx].rdc);
 
@@ -85,7 +85,7 @@ static ssize_t rdc_show(struct device *dev,
 		ret = snprintf(buf, strlen(cal_result) + 1,
 			"%s", cal_result);
 
-	if (idx >= 0 && ret > 0)
+	if (idx > TFA_NOT_FOUND && ret > 0)
 		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
 			__func__, idx, cal_data[idx].rdc);
 	else
@@ -101,16 +101,15 @@ static ssize_t rdc_store(struct device *dev,
 	int idx = tfa_get_dev_idx_from_inchannel(0);
 	int ret = 0, value = 0;
 
+	if(idx <= TFA_NOT_FOUND ) {
+		pr_err("%s: TFA_NOT_FOUND \n", __func__);
+		return -ENODEV;
+	}
+
 	ret = kstrtou32(buf, 10, &value);
 	if (ret < 0) {
 		pr_info("%s: wrong value: %s\n", __func__, buf);
 		return -EINVAL;
-	}
-
-	if (idx >= 0) {
-		cal_data[idx].rdc = value;
-		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
-			__func__, idx, value);
 	}
 
 	return size;
@@ -124,7 +123,7 @@ static ssize_t rdc_r_show(struct device *dev,
 	char cal_result[FILESIZE_CAL] = {0};
 	int ret;
 
-	if (idx >= 0)
+	if (idx > TFA_NOT_FOUND)
 		snprintf(cal_result, FILESIZE_CAL,
 			"%d", cal_data[idx].rdc);
 
@@ -134,7 +133,7 @@ static ssize_t rdc_r_show(struct device *dev,
 		ret = snprintf(buf, strlen(cal_result) + 1,
 			"%s", cal_result);
 
-	if (idx >= 0 && ret > 0)
+	if (idx > TFA_NOT_FOUND && ret > 0)
 		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
 			__func__, idx, cal_data[idx].rdc);
 	else
@@ -150,16 +149,15 @@ static ssize_t rdc_r_store(struct device *dev,
 	int idx = tfa_get_dev_idx_from_inchannel(1);
 	int ret = 0, value = 0;
 
+	if(idx <= TFA_NOT_FOUND ) {
+		pr_err("%s: TFA_NOT_FOUND \n", __func__);
+		return -ENODEV;
+	}
+
 	ret = kstrtou32(buf, 10, &value);
 	if (ret < 0) {
 		pr_info("%s: wrong value: %s\n", __func__, buf);
 		return -EINVAL;
-	}
-
-	if (idx >= 0) {
-		cal_data[idx].rdc = value;
-		pr_info("%s: tfa_cal - dev %d - calibration data (rdc %d)\n",
-			__func__, idx, value);
 	}
 
 	return size;
