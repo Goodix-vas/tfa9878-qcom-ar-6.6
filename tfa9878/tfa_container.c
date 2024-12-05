@@ -1399,7 +1399,7 @@ enum tfa98xx_error tfa_cont_write_profile(struct tfa_device *tfa,
 	int prof_idx, int vstep_idx)
 {
 	enum tfa98xx_error err = TFA98XX_ERROR_OK;
-	int previous_prof_idx = tfa_dev_get_swprof(tfa);
+	int previous_prof_idx = 0;
 	struct tfa_profile_list *prof = NULL;
 	struct tfa_profile_list *previous_prof = NULL;
 	struct tfa_profile_list *prof_tfadsp = NULL;
@@ -1415,6 +1415,7 @@ enum tfa98xx_error tfa_cont_write_profile(struct tfa_device *tfa,
 	if (tfa == NULL)
 		return TFA98XX_ERROR_BAD_PARAMETER;
 
+	previous_prof_idx = tfa_dev_get_swprof(tfa);
 	prof = tfa_cont_get_dev_prof_list(tfa->cnt,
 		tfa->dev_idx, prof_idx);
 	previous_prof = tfa_cont_get_dev_prof_list(tfa->cnt,

@@ -2655,14 +2655,16 @@ static int tfa98xx_set_cnt_reload(struct snd_kcontrol *kcontrol,
 		} while (tries < TFA98XX_LOADFW_NTRIES
 			&& tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK);
 
+		mutex_lock(&tfa98xx->dsp_lock);
 		if ((ret != 0)
-			|| (tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK))
+			|| (tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK)) {
+			mutex_unlock(&tfa98xx->dsp_lock);
 			/* skip preloading if it's not loaded yet */
 			continue;
+		}
 
 		/* Preload settings using internal clock on TFA2 */
 		if (tfa98xx->tfa->tfa_family == 2) {
-			mutex_lock(&tfa98xx->dsp_lock);
 			/* reload by force */
 			tfa98xx->tfa->first_after_boot = 1;
 			tfa98xx_set_stream_state(tfa98xx->tfa, 0);
@@ -2676,8 +2678,8 @@ static int tfa98xx_set_cnt_reload(struct snd_kcontrol *kcontrol,
 					TFA_SET_BF(tfa98xx->tfa, MANSCONF, 1);
 			}
 			tfa_set_status_flag(tfa98xx->tfa, TFA_SET_DEVICE, 0);
-			mutex_unlock(&tfa98xx->dsp_lock);
 		}
+		mutex_unlock(&tfa98xx->dsp_lock);
 	}
 
 	return 1;
@@ -2725,13 +2727,17 @@ static int tfa98xx_create_controls(struct tfa98xx *tfa98xx)
 			nr_controls++; /* Playback Volume control */
 	}
 
+	mutex_lock(&tfa98xx_mutex);
 	tfa98xx_controls = devm_kzalloc(cdev,
 		nr_controls * sizeof(tfa98xx_controls[0]), GFP_KERNEL);
+	mutex_unlock(&tfa98xx_mutex);
 	if (!tfa98xx_controls)
 		return -ENOMEM;
 
 	/* Create a mixer item for selecting the active profile */
+	mutex_lock(&tfa98xx_mutex);
 	name = devm_kzalloc(cdev, MAX_CONTROL_NAME, GFP_KERNEL);
+	mutex_unlock(&tfa98xx_mutex);
 	if (!name)
 		return -ENOMEM;
 
@@ -3621,18 +3627,20 @@ static void tfa98xx_dsp_init(struct tfa98xx *tfa98xx)
 	bool do_sync;
 	int active_device_count = tfa98xx_device_count;
 
+	mutex_lock(&tfa98xx->dsp_lock);
 	if (tfa98xx->dsp_fw_state != TFA98XX_DSP_FW_OK) {
 		pr_debug("Skipping tfa_dev_start (no FW: %d)\n",
 			tfa98xx->dsp_fw_state);
+		mutex_unlock(&tfa98xx->dsp_lock);
 		return;
 	}
 
 	if (tfa98xx->dsp_init == TFA98XX_DSP_INIT_DONE) {
 		pr_debug("Stream already started, skipping DSP power-on\n");
+		mutex_unlock(&tfa98xx->dsp_lock);
 		return;
 	}
 
-	mutex_lock(&tfa98xx->dsp_lock);
 	pr_info("%s: ...\n", __func__);
 
 	tfa98xx->dsp_init = TFA98XX_DSP_INIT_PENDING;
@@ -5407,11 +5415,13 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c)
 	 * We create copies of original structures because each device will
 	 * have its own instance of this structure, with its own address.
 	 */
+	mutex_lock(&tfa98xx_mutex);
 	dai = devm_kzalloc(&i2c->dev, sizeof(tfa98xx_dai), GFP_KERNEL);
 	if (!dai) {
 		ret = -ENOMEM;
 		dev_err(&i2c->dev, "Failed to allocate DAI driver: %d\n",
 			ret);
+		mutex_unlock(&tfa98xx_mutex);
 		goto tfa98xx_i2c_probe_exit;
 	}
 	memcpy(dai, tfa98xx_dai, sizeof(tfa98xx_dai));
@@ -5422,6 +5432,7 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c)
 		0,
 		dai,
 		ARRAY_SIZE(tfa98xx_dai));
+	mutex_unlock(&tfa98xx_mutex);
 
 	ret = snd_soc_register_component(&i2c->dev,
 		&soc_component_dev_tfa98xx, dai,
